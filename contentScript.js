@@ -1,34 +1,53 @@
 function log(o) {
-    console.log(o);
+  console.log(o);
 }
 
-function get_element_count(msg) {
-    return $(msg.selector).length;
+function click_element(element) {
+  element.dispatchEvent(new MouseEvent("click"));
 }
 
-function click(msg) {
-    var elements = $(msg.selector)
-    log(elements)
-    log(elements[msg.click_idx])
-    elements[msg.click_idx].dispatchEvent(new MouseEvent("click"));
+function post_objects(port, objects) {
+  port.postMessage({
+    objects: objects
+  });
 }
 
-$(function () {
+function post_done(port) {
+  port.postMessage({
+    status: 'done',
+    filename: window.location.hostname + '.csv'
+  });
+}
+
+
+
+$(function() {
+
+  var parser = parsers[window.location.hostname]
+  if (parser) {
 
     var port = chrome.runtime.connect({
-        name: "crawler"
+      name: "crawler"
     });
-    port.postMessage({
-        body: "crawler-alive",
-        url: location
+
+    parser(port);
+
+    port.onMessage.addListener(function(msg) {
+      log(msg);
+
+      // if (msg.action) {
+      //   var res = eval(msg.action + '(msg)');
+      //   if (res) {
+      //     port.postMessage(res);
+      //   }
+      // }
+      //
+      // if (msg.id) {
+      //   msg.response = eval(msg.code);
+      //   log(msg);
+      //   port.postMessage(msg)
+      // }
     });
-    port.onMessage.addListener(function (msg) {
-        log(msg);
-        if (msg.action) {
-            var res = eval(msg.action+'(msg)');
-            if (res) {
-                port.postMessage(res);
-            }
-        }
-    });
+  }
+
 });
