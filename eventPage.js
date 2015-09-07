@@ -165,7 +165,7 @@ function rpc(port, code, callback) {
 
 var objects = []
 
-function on_new_msg(msg) {
+function on_new_msg(msg, port) {
   if (msg.id !== undefined) {
     return fire_callback(msg.id, msg)
   }
@@ -175,8 +175,14 @@ function on_new_msg(msg) {
   } else if (msg.status) {
     if (msg.status == 'done') {
       var filename = msg.filename || 'general_site.csv';
-      saveAs(new Blob([ConvertToCSV(objects)], {type: "text/plain;charset=utf-8"}), filename);
+      saveAs(new Blob([ConvertToCSV(objects)], {
+        type: "text/plain;charset=utf-8"
+      }), filename);
     }
+  } else if (msg.navigate) {
+    chrome.tabs.update(port.sender.tab.id, {
+      url: msg.navigate
+    });
   }
 }
 
@@ -185,7 +191,7 @@ function on_new_msg_factory(port) {
     // assumes port is in colosure
     // log(port.sender.tab.id);
     // log(msg);
-    var res = on_new_msg(msg);
+    var res = on_new_msg(msg, port);
     if (res) {
       port.postMessage(res);
     }
@@ -196,8 +202,8 @@ var eventPage = new(function() {
   chrome.runtime.onConnect.addListener(function(port) {
     console.assert(port.name == "crawler");
     // log(port);
-    port.onMessage.addListener(on_new_msg_factory(port));
 
+    port.onMessage.addListener(on_new_msg_factory(port));
     // iterate_though_level_0(port);
   });
 })();

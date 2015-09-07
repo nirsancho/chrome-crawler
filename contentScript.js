@@ -19,16 +19,21 @@ function post_done(port) {
   });
 }
 
-
+function navigate(port, url) {
+  port.postMessage({
+    navigate: url
+  });
+}
 
 $(function() {
 
   var parser = parsers[window.location.hostname]
   if (parser) {
 
-    var port = chrome.runtime.connect({
+    port = chrome.runtime.connect({
       name: "crawler"
     });
+
 
     parser(port);
 
